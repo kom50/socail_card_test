@@ -1,21 +1,13 @@
 const express = require("express"); 
 const nodeHtmlToImage = require('node-html-to-image')
  
-var cors = require('cors'); 
-
+// const cors = require('cors'); 
 const app = express()
 
-app.use(cors())
+app.use(express.static('public')); 
+app.use('/images', express.static('images'));
 
-app.use((res, req, next)=>{
-  console.log('app use');
-  next()
-})
-
-app.get('/', (req,res)=>{
-  res.send('Home')
-})
-
+// app.use(cors())  
 
 // Generate social media card using node-html-to-image
  function dynamicGenSocialCard(req, res){
@@ -25,7 +17,7 @@ app.get('/', (req,res)=>{
 
   console.time();
   nodeHtmlToImage({
-    output: './new.jpg',
+    output: './new.png',
     html: `<html >
       <head>
         <style>
@@ -64,9 +56,9 @@ app.get('/', (req,res)=>{
           <h1 class='title'>{{title}} </h1> 
           <img src='{{logo}}'/>   
         </div>
-        {{#if exams.length}}
-        <p class='exams_label'>Exams:- {{exams}}</p> 
-        {{/if}}
+        // {{#if exams.length}}
+        // <p class='exams_label'>Exams:- {{exams}}</p> 
+        // {{/if}}
       </body>
     </html>`, 
     content:{title,  logo:img_url, exams  }, 
@@ -84,73 +76,83 @@ app.get('/', (req,res)=>{
 }
  
 async function dynamicGenSocialCard1(req, res){
-  console.log('call from Alert', req.query);
+  console.log('call from Alert 1', req.query);
 
-  const {title, img_url, exams} = req.query
-
-  console.time();
+  let {title, img_url, info} = req.query 
+  // title = title.split("%20").join(" ");
+  // info = info.split("%20").join(" ");
+   
   const data = await nodeHtmlToImage({
-    output: './new.jpg',
-    html: `<html >
-      <head>
+    output: './image.png',
+    html: `<!DOCTYPE html>
+      <html lang="en">
         <style>
         .card{
           border: 1px solid blue;
           width:1200px;
-          height:620px;
-          padding: 60px;
+          height:600px; 
           background-color: #f2f2f2;
           position:relative; 
-          border-bottom:20px yellow solid;
+          border-bottom:5px yellow solid;
           box-sizing: border-box; 
         }
         .title{ 
-          font-size:4rem;
+          font-size:3.5rem;
           margin: 0; 
         }
         img{ 
           width: 200px;
           height:200px;
           border-radius:50%;
-          margin-left:10px;
+           
+          margin-left:auto;
         }
-        .exams_label{
+        .info-label{
           position:absolute;
-          bottom:10px;
-          font-size:3rem;
+          bottom:45px;
+          font-size:2.5rem;
+          padding-left:60px;
        } 
       .box{
-        display: flex;
+          display: flex;
+          padding:60px;
       }
+      .site-name{
+        background-color: blue;
+        color: white;
+        padding: 5px;
+        text-align: center;
+        font-size: 2.5rem;
+        position:absolute;
+        bottom:0px;
+        width: 100%;
+        font-weight:bold;
+     }
       </style>
     </head> 
      <body class='card'> 
         <div class="box">
           <h1 class='title'>{{title}} </h1> 
-          <img src='{{logo}}'/>   
+          <img src='{{img_url}}'/>   
         </div>
-        {{#if exams.length}}
-          <p class='exams_label'>Exams:- {{exams}}</p> 
+        {{#if info.length}}
+          <p class='info-label'>Exams:- {{info}}</p> 
         {{/if}}
-      </body>
+        <div class='site-name'>alert.exampathfinder.com</div>
+        </body>
     </html>`, 
-    content:{title,  logo:img_url, exams  }, 
-  })
-    // .then((data) => {
-  console.log('The image was created successfully!', data)
-
+    content:{title, img_url, info  }, 
+  }) 
   res.set("Content-Type", "image/png");
-  res.send(data) 
-  console.timeEnd()
-  // }).catch(err=>{
-    // res.json(err)
-  // })
-}
- 
+  res.status(200)
+  res.send(data)
+}  
 
 app.get('/social_card',  dynamicGenSocialCard1)
 
-const PORT = 5050
+ 
+
+const PORT = process.env.PORT || 8000
 
 app.listen(PORT, ()=>{
   console.log(`Server is running at http://localhost:${PORT}`)
